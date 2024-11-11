@@ -19,14 +19,26 @@ namespace Katrox
 
 		private void Hook_Load()
 		{
-		}
+            AddCommand(Config.Hook.Hook1, "", HookOne);
+            AddCommand(Config.Hook.Hook0, "", HookZero);
+
+            foreach (var xC in Config.Hook.OpenHookForAll) AddCommand(xC, "", HookAc);
+            foreach (var xC in Config.Hook.OpenHookForT) AddCommand(xC, "", HookAcT);
+            foreach (var xC in Config.Hook.OpenHookForCT) AddCommand(xC, "", HookAcCt);
+            foreach (var xC in Config.Hook.DisableHookForAll) AddCommand(xC, "", HookKapa);
+            foreach (var xC in Config.Hook.DisableHookForT) AddCommand(xC, "", HookKapaT);
+            foreach (var xC in Config.Hook.DisableHookForCT) AddCommand(xC, "", HookKapaCT);
+            foreach (var xC in Config.Hook.ChangeHookSpeed) AddCommand(xC, "", HookHiz);
+            foreach (var xC in Config.Hook.GiveTempHook) AddCommand(xC, "", HookVer);
+            foreach (var xC in Config.Hook.RemoveTempHook) AddCommand(xC, "", HookSil);
+        }
 
 		public void HookOne(CCSPlayerController? player, CommandInfo info)
 		{
 			if (PlayerIsValid(player) == false)
 				return;
 
-			if (!HasHookPlayers.Contains(player!.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.HookSettings.HookPermission))
+			if (!HasHookPlayers.Contains(player!.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.Hook.UsePermission))
 			{
 				player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
 				return;
@@ -64,7 +76,7 @@ namespace Katrox
 			if (PlayerIsValid(player) == false)
 				return;
 
-			if (!HasHookPlayers.Contains(player!.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.HookSettings.HookPermission))
+			if (!HasHookPlayers.Contains(player!.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.Hook.UsePermission))
 			{
 				player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
 				return;
@@ -96,7 +108,7 @@ namespace Katrox
 					return;
 				}
 
-				if (!HasHookPlayers.Contains(player.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.HookSettings.HookPermission))
+				if (!HasHookPlayers.Contains(player.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.Hook.UsePermission))
 				{
 					return;
 				}
@@ -132,10 +144,10 @@ namespace Katrox
 				direction = new Vector(direction.X / distanceToTarget, direction.Y / distanceToTarget, direction.Z / distanceToTarget);
 
 				var newVelocity = new Vector(
-					direction.X * Config.HookSettings.HookDefaultSpeed,
-					direction.Y * Config.HookSettings.HookDefaultSpeed,
-					direction.Z * Config.HookSettings.HookDefaultSpeed
-				);
+					direction.X * Config.Hook.DefaultSpeed,
+					direction.Y * Config.Hook.DefaultSpeed,
+					direction.Z * Config.Hook.DefaultSpeed
+                );
 
 				if (pPawn.AbsVelocity != null)
 				{

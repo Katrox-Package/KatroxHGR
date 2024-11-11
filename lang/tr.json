@@ -1,0 +1,24 @@
+{
+  "NotEnoughPermission": "{white}Bu komutu kullanmak için yeterli yetkiniz yok!",
+  "TargetIsWrong": "{white}Hedef hatalı.",
+  ///////////////////////////
+
+  "NamedAdminGave": "{green}{0}{white} isimli yetkili, {blue}{1}{white} adlı oyuncuya {2} verdi.",
+  "NamedAdminDelete": "{green}{0}{white} isimli yetkili, {blue}{1}{white} adlı oyuncunun {2} yetkisini sildi.",
+  "DisabledForAll": "{green}{0}{white} isimli yetkili, {1} kapattı.",
+  "OpenedForAll": "{green}{0}{white} isimli yetkili, {1} açtı.",
+
+  ///////////////////////////
+  "NamedAdminChangedHookSpeed": "{green}{0}{white} isimli yetkili, hookun hızını {yellow}{1}{white} olarak değiştirdi.",
+  "HookSpeedIsWrong": "{white}Hook hız değeri hatalı.",
+  "OpenedHookForT": "{green}{0}{white} isimli yetkili, hooku t takımına açtı.",
+  "OpenedHookForCT": "{green}{0}{white} isimli yetkili, hooku ct takımına açtı.",
+  "DisabledHookForT": "{green}{0}{white} isimli yetkili, t takımının hookunu kapattı.",
+  "DisabledHookForCT": "{green}{0}{white} isimli yetkili, ct takımının hookunu kapattı.",
+  "HookIsDisabledForT": "{white}Hook t takımına kapalı.",
+  "HookIsDisabledForCT": "{white}Hook ct takımına kapalı.",
+  ///////////////////////////
+  "AlreadyGrabbedPlayer": "Zaten bir oyuncuyu yakaladın."
+
+  ///////////////////////////
+}

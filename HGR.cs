@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Katrox
 {
-	public partial class Katrox : BasePlugin
+	public partial class Katrox : BasePlugin, IPluginConfig<HGRConfig>
 	{
 		public override string ModuleName => "KatroxHGR";
 		public override string ModuleVersion => "0.0.1";
@@ -26,11 +26,26 @@ namespace Katrox
 		{
 			_Global = this;
 			_Logger = Logger;
-		}
+
+			Hook_Load();
+			Grab_Load();
+
+            CallOnTick();
+        }
 
 		public override void Unload(bool hotReload)
 		{
-			
+			RemoveOnTick();
 		}
+
+        public HGRConfig Config { get; set; } = new HGRConfig();
+
+        public void OnConfigParsed(HGRConfig config)
+        {
+            Config = config;
+            _Config = config;
+        }
+
+        public static HGRConfig _Config { get; set; } = new HGRConfig();
 	}
 }
