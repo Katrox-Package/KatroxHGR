@@ -1,14 +1,12 @@
 {
   "NotEnoughPermission": "{white}You do not have enough permission to use this command!",
   "TargetIsWrong": "{white}Target is wrong.",
-  ///////////////////////////
 
   "NamedAdminGave": "{green}{0}{white} gave {2} to player {blue}{1}{white}.",
   "NamedAdminDelete": "{green}{0}{white} deleted {2} from player {blue}{1}{white}.",
   "DisabledForAll": "{green}{0}{white} disabled {1} for all.",
   "OpenedForAll": "{green}{0}{white} enabled {1} for all.",
 
-  ///////////////////////////
   "NamedAdminChangedHookSpeed": "{green}{0}{white} changed the hook speed to {yellow}{1}{white}.",
   "HookSpeedIsWrong": "{white}Hook speed value is incorrect.",
   "OpenedHookForT": "{green}{0}{white} enabled hook for Terrorist team.",
@@ -17,13 +15,9 @@
   "DisabledHookForCT": "{green}{0}{white} disabled hook for Counter-Terrorist team.",
   "HookIsDisabledForT": "{white}Hook is disabled for Terrorist team.",
   "HookIsDisabledForCT": "{white}Hook is disabled for Counter-Terrorist team.",
-  ///////////////////////////
 
-  ///////////////////////////
   "AlreadyGrabbedPlayer": "You have already grabbed a player.",
   "GrabbedPlayer": "You grabbed the player named {0}.",
   "GrabSearchingPlayer":  "Searching...",
   "ReleasedGrabbedPlayer": "You released the player named {0}."
-
-  ///////////////////////////
 }
