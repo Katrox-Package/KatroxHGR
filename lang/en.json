@@ -20,7 +20,10 @@
   ///////////////////////////
 
   ///////////////////////////
-  "AlreadyGrabbedPlayer": "You have already grabbed a player."
+  "AlreadyGrabbedPlayer": "You have already grabbed a player.",
+  "GrabbedPlayer": "You grabbed the player named {0}.",
+  "GrabSearchingPlayer":  "Searching...",
+  "ReleasedGrabbedPlayer": "You released the player named {0}."
 
   ///////////////////////////
 }

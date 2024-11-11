@@ -32,6 +32,7 @@ namespace Katrox
 
                     Hook_OnTick(player);
                     Grab_OnTick(player);
+                    Rope_OnTick(player);
 
                 }
             }

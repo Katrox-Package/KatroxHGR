@@ -50,7 +50,7 @@ namespace Katrox
 
 		private void FindAndGrabTarget(CCSPlayerController player)
 		{
-			player.PrintToCenter("Hedef aranıyor...");
+			player.PrintToCenter(Localizer["GrabSearchingPlayer"]);
 
 			if (CustomRayTrace(player, out Vector? endPos) == false)
 			{
@@ -72,7 +72,7 @@ namespace Katrox
 				};
 
 				targetPlayer.PlayerPawn.Value.AbsVelocity.Change(new Vector(0, 0, 0));
-				player.PrintToCenter($"{targetPlayer.PlayerName} yakalandı!");
+				player.PrintToCenter(Localizer["GrabbedPlayer", targetPlayer.PlayerName]);
 			}
 		}
 
@@ -147,7 +147,7 @@ namespace Katrox
 
 			if (xP != null)
 			{
-				player.PrintToCenter($"{xP.PlayerName} bırakıldı!");
+				player.PrintToCenter(Localizer["ReleasedGrabbedPlayer", xP.PlayerName]);
 			}
 
 			if (_grabStates.TryGetValue(player.SteamID, out GrabState? grabState) && grabState.Beam != null)

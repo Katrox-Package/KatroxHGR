@@ -16,7 +16,7 @@ namespace Katrox
                 return;
             }
 
-            if (!AdminManager.PlayerHasPermissions(player, "@css/cvar") &&
+            if (!AdminManager.PlayerHasPermissions(player, Config.Grab.UsePermission) &&
                 !HasGrabPlayers.Contains(player.SteamID))
             {
                 player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
@@ -50,7 +50,7 @@ namespace Katrox
                 return;
             }
 
-            if (!AdminManager.PlayerHasPermissions(player, "@css/cvar") &&
+            if (!AdminManager.PlayerHasPermissions(player, Config.Grab.UsePermission) &&
                 !HasGrabPlayers.Contains(player.SteamID))
             {
                 player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
@@ -67,11 +67,11 @@ namespace Katrox
         }
 
 
-        [CommandHelper(1, "<isim>")]
+        [CommandHelper(1, "<target>")]
         public void GrabVer(CCSPlayerController? player, CommandInfo info)
         {
             var callerName = player == null ? "Console" : player.PlayerName;
-            if (player != null && !AdminManager.PlayerHasPermissions(player, "@css/cvar"))
+            if (player != null && !AdminManager.PlayerHasPermissions(player, Config.Grab.GivePermission))
             {
                 player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
                 return;
@@ -98,11 +98,11 @@ namespace Katrox
 
         }
 
-        [CommandHelper(1, "<isim>")]
+        [CommandHelper(1, "<target>")]
         public void GrabSil(CCSPlayerController? player, CommandInfo info)
         {
             var callerName = player == null ? "Console" : player.PlayerName;
-            if (player != null && !AdminManager.PlayerHasPermissions(player, "@css/cvar"))
+            if (player != null && !AdminManager.PlayerHasPermissions(player, Config.Grab.GivePermission))
             {
                 player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
                 return;

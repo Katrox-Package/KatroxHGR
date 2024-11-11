@@ -18,6 +18,9 @@ namespace Katrox
 
         [JsonIgnore]
         public Grab Grab { get; set; } = new Grab();
-    }
+
+		[JsonIgnore]
+		public Rope Rope { get; set; } = new Rope();
+	}
 
 }

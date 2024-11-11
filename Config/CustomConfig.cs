@@ -61,7 +61,9 @@ namespace Katrox
 
                 var configFiles = new List<(string FileName, Func<object> Loader, Action<object> Setter)>
                 {
-                   ("Hook.json", () => LoadConfig<Hook>("Hook.json"), config => _Config.Hook = Config.Hook = (Hook)config)
+                   ("Hook.json", () => LoadConfig<Hook>("Hook.json"), config => _Config.Hook = Config.Hook = (Hook)config),
+                   ("Grab.json", () => LoadConfig<Grab>("Grab.json"), config => _Config.Grab = Config.Grab = (Grab)config),
+                   ("Rope.json", () => LoadConfig<Rope>("Rope.json"), config => _Config.Rope = Config.Rope = (Rope)config)
                 };
 
                 foreach (var (fileName, loader, setter) in configFiles)
