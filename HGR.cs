@@ -1,4 +1,5 @@
 ﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Translations;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,7 +13,7 @@ namespace Katrox
 	public partial class Katrox : BasePlugin, IPluginConfig<HGRConfig>
 	{
 		public override string ModuleName => "KatroxHGR";
-		public override string ModuleVersion => "0.0.3";
+		public override string ModuleVersion => "0.0.4";
 		public override string ModuleAuthor => "Roxy & Katarina";
 
 
@@ -45,6 +46,8 @@ namespace Katrox
 
         public void OnConfigParsed(HGRConfig config)
         {
+			config.Prefix = StringExtensions.ReplaceColorTags(config.Prefix);
+
             Config = config;
             _Config = config;
         }

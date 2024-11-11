@@ -128,7 +128,7 @@ namespace Katrox
 				{
 					var beamState = grabState.Beam;
 
-					TeleportBeam(beamState,start,end);
+					TeleportBeam(beamState,start,grabbedPawn.AbsOrigin!);
 				}
 				else
 				{

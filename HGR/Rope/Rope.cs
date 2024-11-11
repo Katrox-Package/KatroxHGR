@@ -26,7 +26,7 @@ namespace Katrox
 		private void Rope_Load()
 		{
 			AddCommand(Config.Rope.Rope1, "", RopeOne);
-			AddCommand(Config.Hook.Hook0, "", RopeZero);
+			AddCommand(Config.Rope.Rope0, "", RopeZero);
 
 			foreach (var xC in Config.Rope.GiveTempRope) AddCommand(xC, "", RopeVer);
 			foreach (var xC in Config.Rope.RemoveTempRope) AddCommand(xC, "", RopeSil);
@@ -168,7 +168,7 @@ namespace Katrox
 
 			direction = end - clientloc;
 
-			if (direction.Length() - 5 >= distance - (5 * 4))
+			if (direction.Length() - 5 >= distance - (25))
 			{
 				velocity = player.PlayerPawn?.Value?.AbsVelocity ?? VEC_ZERO;
 				direction = direction.Normalize();
