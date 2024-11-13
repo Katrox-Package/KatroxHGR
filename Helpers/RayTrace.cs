@@ -27,7 +27,7 @@ namespace Katrox
 				case "GameTraceManager":
 					return isWin
 						? "48 8B 0D ? ? ? ? 48 8D 45 ? 48 89 44 24 ? 4C 8D 44 24 ? C7 44 24 ? ? ? ? ? 48 8D 54 24 ? 4C 8B CB"
-						: "48 8D 05 ? ? ? ? 4C 89 E7 F3 0F 11 95";
+						: "48 8D 05 ? ? ? ? F3 0F 58 8D ? ? ? ? 31 FF";
 
 				default:
 					return string.Empty;
