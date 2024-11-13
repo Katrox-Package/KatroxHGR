@@ -77,7 +77,7 @@ namespace Katrox
 		{
 			if (TraceFunc == 0 || GameTraceManager == 0)
 			{
-				Server.PrintToConsole("TraceFunc veya GameTraceManager bulunamadı.");
+				Katrox._Logger?.LogError("TraceFunc or GameTraceManager is 0");
 				return null;
 			}
 

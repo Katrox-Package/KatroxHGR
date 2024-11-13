@@ -1,4 +1,5 @@
 ﻿using CounterStrikeSharp.API;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace Katrox
@@ -39,7 +40,6 @@ namespace Katrox
                 var defaultConfig = new T();
                 var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(filePath, json);
-                Server.PrintToConsole($"{fileName} dosyasi olusturuldu ve kaydedildi.");
                 return defaultConfig;
             }
 
@@ -78,13 +78,13 @@ namespace Katrox
                     }
                     catch (Exception e)
                     {
-                        Server.PrintToConsole($"{fileName} yuklenirken hata: {e.Message}");
+                        _Logger?.LogError($"Error loading {fileName}: {e.Message}");
                     }
                 }
             }
             catch (Exception e)
             {
-                Server.PrintToConsole($"Configler yuklenirken hata: {e.Message}");
+				_Logger?.LogError($"Error loading configs: {e.Message}");
             }
         }
 

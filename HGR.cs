@@ -16,6 +16,9 @@ namespace Katrox
 		public override string ModuleVersion => "0.0.4";
 		public override string ModuleAuthor => "Roxy & Katarina";
 
+		public HGRConfig Config { get; set; } = new HGRConfig();
+		public static HGRConfig _Config { get; set; } = new HGRConfig();
+
 
 		public static Katrox? _Global;
 		internal static ILogger? _Logger;
@@ -42,8 +45,6 @@ namespace Katrox
 			RemoveOnTick();
 		}
 
-        public HGRConfig Config { get; set; } = new HGRConfig();
-
         public void OnConfigParsed(HGRConfig config)
         {
 			config.Prefix = StringExtensions.ReplaceColorTags(config.Prefix);
@@ -52,6 +53,5 @@ namespace Katrox
             _Config = config;
         }
 
-        public static HGRConfig _Config { get; set; } = new HGRConfig();
 	}
 }
