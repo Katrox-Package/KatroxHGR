@@ -23,7 +23,7 @@ namespace Katrox
                 return;
             }
 
-            if (_grabStates.ContainsKey(player!.SteamID) && _grabStates[player.SteamID].GrabbedPlayer != null)
+            if (GrabDatas.ContainsKey(player!.SteamID) && GrabDatas[player.SteamID].Entity != null)
             {
                 player.PrintToCenter(Localizer["AlreadyGrabbedPlayer"]);
                 return;
@@ -34,10 +34,9 @@ namespace Katrox
                 return;
             }
 
-            _grabStates[player.SteamID] = new GrabState
+            GrabDatas[player.SteamID] = new GrabState
             {
-                IsEnabled = true,
-                GrabbedPlayer = null,
+                Entity = null,
                 InitialDistance = null,
                 Beam = null
             };
@@ -57,9 +56,9 @@ namespace Katrox
                 return;
             }
 
-            if (!player.PawnIsAlive || !_grabStates.ContainsKey(player.SteamID) || _grabStates[player.SteamID].GrabbedPlayer == null)
+            if (!player.PawnIsAlive || !GrabDatas.ContainsKey(player.SteamID) || GrabDatas[player.SteamID].Entity == null)
             {
-                _grabStates.Remove(player.SteamID);
+                GrabDatas.Remove(player.SteamID);
                 return;
             }
 

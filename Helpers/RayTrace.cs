@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using CSVector = CounterStrikeSharp.API.Modules.Utils.Vector;
 
 namespace Katrox
@@ -34,6 +35,29 @@ namespace Katrox
 			}
 		}
 
+		public static bool CustomRayTraceData(CCSPlayerController player, [NotNullWhen(true)] out GameTrace? data)
+		{
+			data = null;
+			var playerPawn = player.PlayerPawn.Value;
+			var playerEntity = player.Pawn.Value;
+
+			if (playerEntity?.CBodyComponent?.SceneNode == null || playerPawn == null)
+				return false;
+
+			var pawnPosition = playerEntity.CBodyComponent.SceneNode.AbsOrigin ?? VEC_ZERO;
+			var pawnAngles = playerPawn.EyeAngles ?? ANGLE_ZERO;
+
+			var traceResult = RayTrace.TraceShape(pawnPosition, pawnAngles, ~0UL);
+
+			if (traceResult.HasValue)
+			{
+				data = traceResult.Value;
+				return true;
+			}
+
+			return false;
+		}
+
 		public static bool CustomRayTrace(CCSPlayerController player, [NotNullWhen(true)] out CSVector? endPos)
 		{
 			endPos = null;
@@ -55,10 +79,7 @@ namespace Katrox
 				endPos = result.Value.EndPos.ToCSVector();
 				return true;
 			}
-			else
-			{
-				_Logger?.LogError("Trace failed: result value null");
-			}
+
 			return false;
 		}
 	}
