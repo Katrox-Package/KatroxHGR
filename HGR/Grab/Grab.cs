@@ -11,151 +11,148 @@ namespace Katrox
 {
 	public partial class Katrox
 	{
-		private static Dictionary<ulong, GrabState> _grabStates = new();
+		private static Dictionary<ulong, GrabState> GrabDatas = new();
 		private static List<ulong> HasGrabPlayers = new();
 
 		private class GrabState
 		{
-			public bool IsEnabled { get; set; }
-			public ulong? GrabbedPlayer { get; set; }
 			public float? InitialDistance { get; set; }
 			public CEnvBeam? Beam { get; set; }
+			public CBaseEntity? Entity { get; set; } = null;
 		}
 
 		public void Grab_Load()
 		{
-            AddCommand(Config.Grab.Grab1, "", GrabOne);
-            AddCommand(Config.Grab.Grab0, "", GrabZero);
+			AddCommand(Config.Grab.Grab1, "", GrabOne);
+			AddCommand(Config.Grab.Grab0, "", GrabZero);
 
-            foreach (var xC in Config.Grab.GiveTempGrab) AddCommand(xC, "", GrabVer);
-            foreach (var xC in Config.Grab.RemoveTempGrab) AddCommand(xC, "", GrabSil);
-        }
+			foreach (var xC in Config.Grab.GiveTempGrab) AddCommand(xC, "", GrabVer);
+			foreach (var xC in Config.Grab.RemoveTempGrab) AddCommand(xC, "", GrabSil);
+		}
 
 		private void Grab_OnTick(CCSPlayerController? player)
 		{
-			if (!_grabStates.ContainsKey(player!.SteamID) || !_grabStates[player.SteamID].IsEnabled || !player.PawnIsAlive)
-			{
-				return;
-			}
+			if (!PlayerIsValid(player)) return;
+			if (!GrabDatas.ContainsKey(player.SteamID)) return;
 
-			if (_grabStates[player.SteamID].GrabbedPlayer == null || !_grabStates[player.SteamID].InitialDistance.HasValue)
+			if (GrabDatas[player.SteamID].Entity == null || !GrabDatas[player.SteamID].InitialDistance.HasValue)
 			{
-				FindAndGrabTarget(player);
+				MoveType_t[] allowedMoveTypes = new[]
+				{
+					MoveType_t.MOVETYPE_VPHYSICS,
+					MoveType_t.MOVETYPE_WALK,
+					MoveType_t.MOVETYPE_OBSOLETE,
+					MoveType_t.MOVETYPE_NONE
+				};
+
+				player.PrintToCenterHtml(Localizer["GrabSearchingPlayer"]);
+				var target = player.GetAimTarget<CBaseEntity>();
+				if (target != null
+					&& target.IsValid
+					&& allowedMoveTypes.Contains(target.MoveType))
+				{
+					var initialDistance = (player.PlayerPawn.Value!.AbsOrigin ?? VEC_ZERO).Distance(target.AbsOrigin ?? VEC_ZERO);
+					GrabDatas[player.SteamID] = new GrabState
+					{
+						InitialDistance = initialDistance,
+						Beam = null,
+						Entity = target
+					};
+
+					if (target.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true)
+						target.As<CCSPlayerPawn>()?.OriginalController?.Value?.PlayerPawn?.Value?.Teleport(null, null, VEC_ZERO);
+					else
+						target.Teleport(null, null, VEC_ZERO);
+
+					player.PrintToCenter(Localizer["GrabbedPlayer", target.DesignerName]);
+				}
 			}
 			else
 			{
-				UpdateGrabbedPlayerPosition(player);
-			}
-		}
-
-		private void FindAndGrabTarget(CCSPlayerController player)
-		{
-			player.PrintToCenter(Localizer["GrabSearchingPlayer"]);
-
-			if (CustomRayTrace(player, out Vector? endPos) == false)
-			{
-				return;
-			}
-
-			var targetPlayer = GetPlayers().FirstOrDefault(x => x.SteamID != player.SteamID && x.PlayerPawn.Value != null && (x.PlayerPawn.Value.AbsOrigin ?? new Vector(0, 0, 0)).Distance(endPos!) < 100);
-
-			if (targetPlayer != null && targetPlayer.PlayerPawn.Value != null && targetPlayer.PawnIsAlive && player.PawnIsAlive)
-			{
-				var initialDistance = (player.PlayerPawn.Value!.AbsOrigin ?? new Vector(0, 0, 0)).Distance(endPos!);
-
-				_grabStates[player.SteamID] = new GrabState
+				if (GrabDatas[player.SteamID].Entity != null)
 				{
-					IsEnabled = true,
-					GrabbedPlayer = targetPlayer.SteamID,
-					InitialDistance = initialDistance,
-					Beam = null
-				};
-
-				targetPlayer.PlayerPawn.Value.AbsVelocity.Change(new Vector(0, 0, 0));
-				player.PrintToCenter(Localizer["GrabbedPlayer", targetPlayer.PlayerName]);
+					Grab_EntityGrab(player);
+				}
 			}
 		}
 
-		private void UpdateGrabbedPlayerPosition(CCSPlayerController player)
+		private void Grab_EntityGrab(CCSPlayerController player)
 		{
-			var grabbedPlayer = GetPlayers().FirstOrDefault(x => x.SteamID == _grabStates[player.SteamID].GrabbedPlayer);
-			if (grabbedPlayer == null)
-			{
-				return;
-			}
-			var grabbedPawn = grabbedPlayer.PlayerPawn.Value;
-
-			if (grabbedPlayer == null || !grabbedPlayer.PawnIsAlive || !player.PawnIsAlive)
+			var gEntity = GrabDatas[player.SteamID].Entity;
+			if (gEntity == null
+				|| !gEntity.IsValid
+				|| !player.PawnIsAlive
+				|| (gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true && gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.PawnIsAlive != true))
 			{
 				ReleaseGrabbedPlayer(player);
 				return;
 			}
 
 			var start = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
-			var forwardVector = GetForwardVector(player) ?? new Vector(1, 0, 0);
-			var initialDistance = _grabStates[player.SteamID].InitialDistance;
-			var end = start + forwardVector * initialDistance!.Value;
+
+			var eyeAngles = player.PlayerPawn?.Value?.EyeAngles;
+			if (eyeAngles == null) return;
+
+			Vector forward = new Vector();
+			NativeAPI.AngleVectors(eyeAngles.Handle, forward.Handle, IntPtr.Zero, IntPtr.Zero);
+
+			var initialDistance = GrabDatas[player.SteamID].InitialDistance;
+			var end = start + forward * initialDistance!.Value;
 
 			bool isMouse1ButtonPressed = (player.Pawn.Value?.MovementServices!.Buttons.ButtonStates[0] & 1) != 0;
 			bool isMouse2ButtonPressed = (player.Pawn.Value?.MovementServices!.Buttons.ButtonStates[0] & 2048) != 0;
 
-			if (grabbedPawn != null)
+			if (gEntity != null && gEntity.IsValid)
 			{
 				if (isMouse1ButtonPressed)
 				{
 					initialDistance -= 15;
-					if (initialDistance <= 30)
-						initialDistance = 30;
+					if (initialDistance <= 30) initialDistance = 30;
 				}
 				else if (isMouse2ButtonPressed)
 				{
 					initialDistance += 15;
 				}
 
-				_grabStates[player.SteamID].InitialDistance = initialDistance;
-				end = start + forwardVector * initialDistance.Value;
+				GrabDatas[player.SteamID].InitialDistance = initialDistance;
 
-				var velocity = (end - grabbedPawn.AbsOrigin!) * 7;
-				grabbedPawn.AbsVelocity.X = velocity.X;
-				grabbedPawn.AbsVelocity.Y = velocity.Y;
-				grabbedPawn.AbsVelocity.Z = velocity.Z;
+				end = start + forward * initialDistance.Value;
+				var velocity = (end - gEntity.AbsOrigin!) * 7;
 
+				if (gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true)
+					gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.PlayerPawn?.Value?.Teleport(null, null, velocity);
+				else
+					gEntity.Teleport(null, null, velocity);
 
 				var color = Color.FromArgb(255, 255, 0, 0);
 				var width = 3;
-
-                if (_grabStates.TryGetValue(player.SteamID, out GrabState? grabState) && grabState != null && grabState.Beam != null)
+				if (GrabDatas.TryGetValue(player.SteamID, out GrabState? grabState) && grabState != null && grabState.Beam != null)
 				{
 					var beamState = grabState.Beam;
-
-					TeleportBeam(beamState,start,grabbedPawn.AbsOrigin!);
+					TeleportBeam(beamState, start, gEntity.AbsOrigin!);
 				}
 				else
 				{
-                    var a = CreateBeam(start, grabbedPawn.AbsOrigin!, color, width);
-					if(a != null && a.IsValid && grabState != null)
+					var a = CreateBeam(start, gEntity.AbsOrigin!, color, width);
+					if (a != null && a.IsValid && grabState != null)
 					{
 						grabState.Beam = a;
 					}
-                }
-            }
-        }
+				}
+			}
+		}
 
 		private void ReleaseGrabbedPlayer(CCSPlayerController player)
 		{
-			var xP = GetPlayers().FirstOrDefault(x => x.SteamID == _grabStates[player.SteamID].GrabbedPlayer);
+			var gEntity = GrabDatas[player.SteamID].Entity;
+			if (gEntity != null)
+				player.PrintToCenter(Localizer["ReleasedGrabbedPlayer", gEntity?.DesignerName ?? ""]);
 
-			if (xP != null)
+			if (GrabDatas.TryGetValue(player.SteamID, out GrabState? grabState) && grabState.Beam != null)
 			{
-				player.PrintToCenter(Localizer["ReleasedGrabbedPlayer", xP.PlayerName]);
+				grabState.Beam.AcceptInput("Kill");
 			}
-
-			if (_grabStates.TryGetValue(player.SteamID, out GrabState? grabState) && grabState.Beam != null)
-			{
-				grabState.Beam.Remove();
-			}
-
-			_grabStates.Remove(player.SteamID);
+			GrabDatas.Remove(player.SteamID);
 		}
 
 
