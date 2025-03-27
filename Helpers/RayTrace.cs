@@ -1,166 +1,156 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using CSVector = CounterStrikeSharp.API.Modules.Utils.Vector;
 
 namespace Katrox
 {
-	public partial class Katrox
-	{
-		public static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    public static class RayTrace
+    {
+        public static bool TraceShape(CCSPlayerController player, [NotNullWhen(true)] out TraceResult<CBaseEntity>? result, ulong mask = ~0UL)
+        {
+            result = null;
 
-		public static string GetSigFor(string func)
-		{
-			var isWin = IsWindows;
-			switch (func)
-			{
-				case "TraceFunc":
-					return isWin
-						? "4C 8B DC 49 89 5B ? 49 89 6B ? 49 89 73 ? 57 41 56 41 57 48 81 EC ? ? ? ? 0F 57 C0"
-						: "48 B8 ? ? ? ? ? ? ? ? 55 48 89 E5 41 57 41 56 49 89 D6 41 55";
+            var pPawn = player.PlayerPawn.Value;
+            var basePawn = player.Pawn.Value;
 
-				case "GameTraceManager":
-					return isWin
-						? "48 8B 0D ? ? ? ? 48 8D 45 ? 48 89 44 24 ? 4C 8D 44 24 ? C7 44 24 ? ? ? ? ? 48 8D 54 24 ? 4C 8B CB"
-						: "48 8D 05 ? ? ? ? F3 0F 58 8D ? ? ? ? 31 FF";
+            if (basePawn?.CBodyComponent?.SceneNode == null || pPawn == null || !pPawn.IsValid)
+                return false;
 
-				default:
-					return string.Empty;
-			}
-		}
+            var pawnPosition = basePawn.CBodyComponent.SceneNode.AbsOrigin ?? Katrox.VEC_ZERO;
+            var pawnAngles = pPawn.EyeAngles ?? Katrox.ANGLE_ZERO;
 
-		public static bool CustomRayTraceData(CCSPlayerController player, [NotNullWhen(true)] out GameTrace? data)
-		{
-			data = null;
-			var playerPawn = player.PlayerPawn.Value;
-			var playerEntity = player.Pawn.Value;
+            var traceResult = TraceShape(pawnPosition, pawnAngles, mask);
+            if (traceResult.HasValue)
+            {
+                var endPos = traceResult.Value.EndPos.ToCSVector();
+                var hitEntity = traceResult.Value.GetHitEntityInstance<CBaseEntity>();
 
-			if (playerEntity?.CBodyComponent?.SceneNode == null || playerPawn == null)
-				return false;
+                result = new(endPos, hitEntity);
+                return true;
+            }
 
-			var pawnPosition = playerEntity.CBodyComponent.SceneNode.AbsOrigin ?? VEC_ZERO;
-			var pawnAngles = playerPawn.EyeAngles ?? ANGLE_ZERO;
+            return false;
+        }
 
-			var traceResult = RayTrace.TraceShape(pawnPosition, pawnAngles, ~0UL);
+        public readonly struct TraceResult<T> where T : CEntityInstance
+        {
+            public CSVector EndPos { get; }
+            public T? HitEntity { get; }
 
-			if (traceResult.HasValue)
-			{
-				data = traceResult.Value;
-				return true;
-			}
+            public TraceResult(CSVector endPos, T? hitEntity)
+            {
+                EndPos = endPos;
+                HitEntity = hitEntity;
+            }
+        }
 
-			return false;
-		}
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private unsafe delegate bool TraceShapeDelegate(
+            nint gameTraceManager,
+            nint vecStart,
+            nint vecEnd,
+            nint skip,
+            ulong mask,
+            byte a6,
+            GameTrace* pGameTrace
+        );
 
-		public static bool CustomRayTrace(CCSPlayerController player, [NotNullWhen(true)] out CSVector? endPos)
-		{
-			endPos = null;
+        private static TraceShapeDelegate? _traceShape;
 
-			var pPawn = player.PlayerPawn.Value;
-			var pawn = player.Pawn.Value;
-			if (pawn?.CBodyComponent?.SceneNode == null || pPawn == null)
-			{
-				return false;
-			}
+        private static readonly nint TraceFunc =
+            NativeAPI.FindSignature(Addresses.ServerPath, GameData.GetSignature("TraceFunc"));
 
-			var pos = pawn.CBodyComponent.SceneNode.AbsOrigin ?? VEC_ZERO;
-			var angles = pPawn.EyeAngles ?? ANGLE_ZERO;
+        private static readonly nint GameTraceManager =
+            NativeAPI.FindSignature(Addresses.ServerPath, GameData.GetSignature("GameTraceManager"));
 
-			var result = RayTrace.TraceShape(pos, angles, ~0UL);
+        private static readonly Lazy<nint> GameTraceManagerAddress = new(() =>
+            Address.GetAbsoluteAddress(GameTraceManager, 3, 7));
 
-			if (result.HasValue)
-			{
-				endPos = result.Value.EndPos.ToCSVector();
-				return true;
-			}
+        private static unsafe GameTrace? TraceShape(CSVector origin, QAngle angles, ulong mask = ~0UL)
+        {
+            if (TraceFunc == 0 || GameTraceManager == 0)
+                return null;
 
-			return false;
-		}
-	}
+            _traceShape ??= Marshal.GetDelegateForFunctionPointer<TraceShapeDelegate>(TraceFunc);
 
-	public class RayTrace
-	{
-		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		private unsafe delegate bool TraceShapeDelegate(nint gameTraceManager, nint vecStart, nint vecEnd, nint skip, ulong mask, byte a6, GameTrace* pGameTrace);
+            var forward = new CSVector();
+            NativeAPI.AngleVectors(angles.Handle, forward.Handle, IntPtr.Zero, IntPtr.Zero);
 
-		private static TraceShapeDelegate? _traceShape;
+            var start = new CSVector(
+                origin.X + forward.X * 50,
+                origin.Y + forward.Y * 50,
+                origin.Z + forward.Z * 50 + 64
+            );
 
-		private static readonly nint TraceFunc = NativeAPI.FindSignature(Addresses.ServerPath, Katrox.GetSigFor("TraceFunc"));
-		private static readonly nint GameTraceManager = NativeAPI.FindSignature(Addresses.ServerPath, Katrox.GetSigFor("GameTraceManager"));
+            var end = new CSVector(
+                origin.X + forward.X * 8192,
+                origin.Y + forward.Y * 8192,
+                origin.Z + forward.Z * 8192
+            );
 
-		public static unsafe GameTrace? TraceShape(CSVector? origin, QAngle angles, ulong mask)
-		{
-			if (TraceFunc == 0 || GameTraceManager == 0)
-			{
-				Katrox._Logger?.LogError("TraceFunc or GameTraceManager is 0");
-				return null;
-			}
+            var trace = stackalloc GameTrace[1];
 
-			if (origin == null) return null;
+            bool result = _traceShape(
+                *(nint*)GameTraceManagerAddress.Value,
+                start.Handle,
+                end.Handle,
+                IntPtr.Zero,
+                mask,
+                4,
+                trace
+            );
 
-			var gameTraceManagerAddress = Address.GetAbsoluteAddress(GameTraceManager, 3, 7);
-			_traceShape ??= Marshal.GetDelegateForFunctionPointer<TraceShapeDelegate>(TraceFunc);
+            return result ? trace[0] : null;
+        }
+    }
 
-			var forward = new CSVector();
-			NativeAPI.AngleVectors(angles.Handle, forward.Handle, IntPtr.Zero, IntPtr.Zero);
+    internal static class Address
+    {
+        public static unsafe nint GetAbsoluteAddress(nint addr, nint offset, int size)
+        {
+            if (addr == 0) return 0;
+            int code = *(int*)(addr + offset);
+            return addr + code + size;
+        }
 
-			var _origin = new CSVector(origin.X, origin.Y, origin.Z);
-			var endOrigin = new CSVector(
-				_origin.X + forward.X * 8192,
-				_origin.Y + forward.Y * 8192,
-				_origin.Z + forward.Z * 8192
-			);
+        public static nint GetCallAddress(nint address)
+        {
+            return GetAbsoluteAddress(address, 1, 5);
+        }
+    }
 
-			_origin.X += forward.X * 50;
-			_origin.Y += forward.Y * 50;
-			_origin.Z += forward.Z * 50 + 64;
+    [StructLayout(LayoutKind.Explicit, Size = 0x44)]
+    public unsafe struct TraceHitboxData
+    {
+        [FieldOffset(0x38)] public int HitGroup;
+        [FieldOffset(0x40)] public int HitboxId;
+    }
 
-			var trace = stackalloc GameTrace[1];
+    [StructLayout(LayoutKind.Explicit, Size = 0xB8)]
+    public unsafe struct GameTrace
+    {
+        [FieldOffset(0x00)] public void* Surface;
+        [FieldOffset(0x08)] public void* HitEntity;
+        [FieldOffset(0x10)] public TraceHitboxData* HitboxData;
+        [FieldOffset(0x50)] public uint Contents;
+        [FieldOffset(0x78)] public Vector3 StartPos;
+        [FieldOffset(0x84)] public Vector3 EndPos;
+        [FieldOffset(0x90)] public Vector3 Normal;
+        [FieldOffset(0x9C)] public Vector3 Position;
+        [FieldOffset(0xAC)] public float Fraction;
+        [FieldOffset(0xB6)] public bool AllSolid;
 
-			bool result = _traceShape(*(nint*)gameTraceManagerAddress, _origin.Handle, endOrigin.Handle, IntPtr.Zero, mask, 4, trace);
+        public T? GetHitEntityInstance<T>() where T : CEntityInstance // thanks to byali
+        {
+            if (HitEntity == null)
+                return null;
 
-			return result ? trace[0] : null;
-		}
-	}
-
-	internal static class Address
-	{
-		public static unsafe nint GetAbsoluteAddress(nint addr, nint offset, int size)
-		{
-			if (addr == 0) return 0;
-			int code = *(int*)(addr + offset);
-			return addr + code + size;
-		}
-
-		public static nint GetCallAddress(nint address) => GetAbsoluteAddress(address, 1, 5);
-	}
-
-	[StructLayout(LayoutKind.Explicit, Size = 0x44)]
-	public unsafe struct TraceHitboxData
-	{
-		[FieldOffset(0x38)] public int HitGroup;
-		[FieldOffset(0x40)] public int HitboxId;
-	}
-
-	[StructLayout(LayoutKind.Explicit, Size = 0xB8)]
-	public unsafe struct GameTrace
-	{
-		[FieldOffset(0)] public void* Surface;
-		[FieldOffset(0x8)] public void* HitEntity;
-		[FieldOffset(0x10)] public TraceHitboxData* HitboxData;
-		[FieldOffset(0x50)] public uint Contents;
-		[FieldOffset(0x78)] public Vector3 StartPos;
-		[FieldOffset(0x84)] public Vector3 EndPos;
-		[FieldOffset(0x90)] public Vector3 Normal;
-		[FieldOffset(0x9C)] public Vector3 Position;
-		[FieldOffset(0xAC)] public float Fraction;
-		[FieldOffset(0xB6)] public bool AllSolid;
-	}
-
+            var handle = new nint(HitEntity);
+            return Activator.CreateInstance(typeof(T), handle) as T;
+        }
+    }
 }

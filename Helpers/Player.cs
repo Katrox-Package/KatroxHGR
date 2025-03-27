@@ -7,6 +7,18 @@ namespace Katrox
 {
 	public static class PlayerExtensions
 	{
+        public static Vector? GetAimVector(this CCSPlayerController player)
+        {
+            if (player == null)
+                return null;
+
+            if (RayTrace.TraceShape(player, out var result))
+            {
+                return result?.EndPos;
+            }
+            return null;
+        }
+
 		public static T? GetAimTarget<T>(this CCSPlayerController player, string designerName = "", string excludeDesignerName = "") where T : CBaseEntity
 		{
 			if (player == null)
@@ -14,56 +26,20 @@ namespace Katrox
 
 			if (typeof(T) == typeof(CCSPlayerController))
 			{
-				var pawn = GetAimTarget<CCSPlayerPawn>(player, designerName, excludeDesignerName);
-				if (pawn?.IsValid == true && pawn.DesignerName == "player")
+				var ent = GetAimTarget<CBaseEntity>(player, designerName, excludeDesignerName);
+				if (ent?.IsValid == true && ent.DesignerName.Contains("player"))
 				{
-					return pawn.OriginalController.Value as T;
+					return ent.As<CCSPlayerPawn>().OriginalController.Value as T;
 				}
 				return null;
 			}
 
-			var GameRules = Utilities.FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules").First().GameRules;
-			var targetEntity = GameRules?.FindPickerEntity<T>(player);
+            if (RayTrace.TraceShape(player, out var result) && result?.HitEntity is { DesignerName: not "worldent" } targetEntity)
+            {
+                return targetEntity as T;
+            }
 
-			if (targetEntity == null
-				|| !targetEntity.IsValid
-				|| targetEntity.Entity == null
-				|| string.IsNullOrWhiteSpace(targetEntity.DesignerName)
-				|| (!string.IsNullOrWhiteSpace(designerName) && !targetEntity.DesignerName.Contains(designerName, StringComparison.OrdinalIgnoreCase))
-				|| (!string.IsNullOrWhiteSpace(excludeDesignerName) && targetEntity.DesignerName.Contains(excludeDesignerName, StringComparison.OrdinalIgnoreCase)))
-			{
-				return null;
-			}
-
-			if (Katrox.CustomRayTraceData(player, out var traceData) && traceData.HasValue)
-			{
-				var traceValue = traceData.Value;
-				float fraction = traceValue.Fraction;
-				Vector endPos = traceValue.EndPos.ToCSVector();
-
-				if (fraction < 1.0f && targetEntity.AbsOrigin != null)
-				{
-					var collisionProp = targetEntity.Collision;
-					if (collisionProp == null)
-						return null;
-
-					Vector mins = collisionProp.Mins;
-					Vector maxs = collisionProp.Maxs;
-					Vector entityOrigin = targetEntity.AbsOrigin;
-					Vector boxCenterLocal = (mins + maxs) * 0.5f;
-					Vector boxCenterWorld = entityOrigin + boxCenterLocal;
-					Vector boxExtents = (maxs - mins) * 0.5f;
-					float boundingSphereRadius = boxExtents.Length();
-
-					float distanceHitToCenter = VectorHelper.Distance(endPos, boxCenterWorld);
-					if (distanceHitToCenter <= boundingSphereRadius)
-					{
-						return targetEntity;
-					}
-				}
-			}
-
-			return null;
+            return null;
 		}
 	}
 

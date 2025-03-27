@@ -169,7 +169,7 @@ namespace Katrox
 				return;
 			}
 
-			if (CustomRayTrace(player, out Vector? endPos) == false)
+			if (player.GetAimVector() is not { } endPos)
 				return;
 
 			var playerX = player.PlayerPawn.Value.CBodyComponent.SceneNode.AbsOrigin.X;

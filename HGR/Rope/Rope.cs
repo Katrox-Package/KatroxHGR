@@ -116,10 +116,8 @@ namespace Katrox
 
 			var clientloc = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
 
-			if (CustomRayTrace(player, out Vector? endPos) == false)
-			{
+			if (player.GetAimVector() is not { } endPos)
 				return;
-			}
 
 			_ropeStates[player.SteamID] = new RopeState
 			{
