@@ -13,7 +13,7 @@ namespace Katrox
 	public partial class Katrox : BasePlugin, IPluginConfig<HGRConfig>
 	{
 		public override string ModuleName => "KatroxHGR";
-		public override string ModuleVersion => "0.0.6";
+		public override string ModuleVersion => "0.0.7";
 		public override string ModuleAuthor => "Roxy & Katarina";
 
 		public HGRConfig Config { get; set; } = new HGRConfig();
