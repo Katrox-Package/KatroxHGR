@@ -1,6 +1,6 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Text.Json;
+using CounterStrikeSharp.API;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Katrox
 {
@@ -84,7 +84,7 @@ namespace Katrox
             }
             catch (Exception e)
             {
-				_Logger?.LogError($"Error loading configs: {e.Message}");
+                _Logger?.LogError($"Error loading configs: {e.Message}");
             }
         }
 

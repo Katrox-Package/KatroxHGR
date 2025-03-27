@@ -1,242 +1,239 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Drawing;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
-using Katrox;
-using System.Drawing;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace Katrox
 {
-	public partial class Katrox
-	{
-		private static Dictionary<ulong, RopeState> _ropeStates = new();
-		private static List<ulong> HasRopePlayers = new();
+    public partial class Katrox
+    {
+        private static Dictionary<ulong, RopeState> _ropeStates = new();
+        private static List<ulong> HasRopePlayers = new();
 
-		private class RopeState
-		{
-			public bool IsEnabled { get; set; }
-			public Vector? TargetIndex { get; set; }
-			public float? Distance { get; set; }
-			public CEnvBeam? Beam { get; set; }
-		}
+        private class RopeState
+        {
+            public bool IsEnabled { get; set; }
+            public Vector? TargetIndex { get; set; }
+            public float? Distance { get; set; }
+            public CEnvBeam? Beam { get; set; }
+        }
 
-		private void Rope_Load()
-		{
-			if (!string.IsNullOrWhiteSpace(Config.Rope.Rope1))
-				AddCommand(Config.Rope.Rope1, "", RopeOne);
-			if (!string.IsNullOrWhiteSpace(Config.Rope.Rope0))
-				AddCommand(Config.Rope.Rope0, "", RopeZero);
+        private void Rope_Load()
+        {
+            if (!string.IsNullOrWhiteSpace(Config.Rope.Rope1))
+                AddCommand(Config.Rope.Rope1, "", RopeOne);
+            if (!string.IsNullOrWhiteSpace(Config.Rope.Rope0))
+                AddCommand(Config.Rope.Rope0, "", RopeZero);
 
-			foreach (var xC in Config.Rope.GiveTempRope.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", RopeVer);
-			foreach (var xC in Config.Rope.RemoveTempRope.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", RopeSil);
-		}
+            foreach (var xC in Config.Rope.GiveTempRope.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", RopeVer);
+            foreach (var xC in Config.Rope.RemoveTempRope.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", RopeSil);
+        }
 
-		[CommandHelper(1, "<target>")]
-		public void RopeVer(CCSPlayerController? player, CommandInfo info)
-		{
-			var callerName = player == null ? "Console" : player.PlayerName;
-			if (player != null && !AdminManager.PlayerHasPermissions(player, Config.Grab.GivePermission))
-			{
-				player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
-				return;
-			}
+        [CommandHelper(1, "<target>")]
+        public void RopeVer(CCSPlayerController? player, CommandInfo info)
+        {
+            var callerName = player == null ? "Console" : player.PlayerName;
+            if (player != null && !AdminManager.PlayerHasPermissions(player, Config.Grab.GivePermission))
+            {
+                player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
+                return;
+            }
 
-			var target = info.GetArgTargetResult(1);
+            var target = info.GetArgTargetResult(1);
 
-			if (target == null)
-			{
-				player?.PrintToChat(Config.Prefix + ChatColors.White + Localizer["TargetIsWrong"]);
-				return;
-			}
+            if (target == null)
+            {
+                player?.PrintToChat(Config.Prefix + ChatColors.White + Localizer["TargetIsWrong"]);
+                return;
+            }
 
-			target
-				.ToList()
-				.ForEach(x =>
-				{
-					if (!HasRopePlayers.Contains(x.SteamID))
-					{
-						HasRopePlayers.Add(x.SteamID);
-					}
-					Server.PrintToChatAll(Config.Prefix + ChatColors.White + Localizer["NamedAdminGave", callerName, x.PlayerName, "rope"]);
-				});
+            target
+                .ToList()
+                .ForEach(x =>
+                {
+                    if (!HasRopePlayers.Contains(x.SteamID))
+                    {
+                        HasRopePlayers.Add(x.SteamID);
+                    }
+                    Server.PrintToChatAll(Config.Prefix + ChatColors.White + Localizer["NamedAdminGave", callerName, x.PlayerName, "rope"]);
+                });
 
-		}
+        }
 
-		[CommandHelper(1, "<target>")]
-		public void RopeSil(CCSPlayerController? player, CommandInfo info)
-		{
-			var callerName = player == null ? "Console" : player.PlayerName;
-			if (player != null && !AdminManager.PlayerHasPermissions(player, Config.Grab.GivePermission))
-			{
-				player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
-				return;
-			}
+        [CommandHelper(1, "<target>")]
+        public void RopeSil(CCSPlayerController? player, CommandInfo info)
+        {
+            var callerName = player == null ? "Console" : player.PlayerName;
+            if (player != null && !AdminManager.PlayerHasPermissions(player, Config.Grab.GivePermission))
+            {
+                player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
+                return;
+            }
 
-			var target = info.GetArgTargetResult(1);
+            var target = info.GetArgTargetResult(1);
 
-			if (target == null)
-			{
-				player?.PrintToChat(Config.Prefix + ChatColors.White + Localizer["TargetIsWrong"]);
-				return;
-			}
+            if (target == null)
+            {
+                player?.PrintToChat(Config.Prefix + ChatColors.White + Localizer["TargetIsWrong"]);
+                return;
+            }
 
-			target
-				.ToList()
-				.ForEach(x =>
-				{
-					if (HasRopePlayers.Contains(x.SteamID))
-					{
-						HasRopePlayers.RemoveAll(y => y == x.SteamID);
-					}
-					Server.PrintToChatAll(Config.Prefix + ChatColors.White + Localizer["NamedAdminDelete", callerName, x.PlayerName, "rope"]);
-				});
-		}
+            target
+                .ToList()
+                .ForEach(x =>
+                {
+                    if (HasRopePlayers.Contains(x.SteamID))
+                    {
+                        HasRopePlayers.RemoveAll(y => y == x.SteamID);
+                    }
+                    Server.PrintToChatAll(Config.Prefix + ChatColors.White + Localizer["NamedAdminDelete", callerName, x.PlayerName, "rope"]);
+                });
+        }
 
-		public void RopeOne(CCSPlayerController? player, CommandInfo info)
-		{
-			if (PlayerIsValid(player) == false)
-				return;
-			
-			if (!HasRopePlayers.Contains(player.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.Rope.UsePermission))
-			{
-				player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
-				return;
-			}
+        public void RopeOne(CCSPlayerController? player, CommandInfo info)
+        {
+            if (PlayerIsValid(player) == false)
+                return;
 
-			if (!player.PawnIsAlive)
-				return;
+            if (!HasRopePlayers.Contains(player.SteamID) && !AdminManager.PlayerHasPermissions(player, Config.Rope.UsePermission))
+            {
+                player.PrintToChat(Config.Prefix + ChatColors.White + Localizer["NotEnoughPermission"]);
+                return;
+            }
 
-			if (_ropeStates.ContainsKey(player.SteamID) && _ropeStates[player.SteamID].IsEnabled)
-			{
-				return;
-			}
+            if (!player.PawnIsAlive)
+                return;
 
-			var clientloc = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
+            if (_ropeStates.ContainsKey(player.SteamID) && _ropeStates[player.SteamID].IsEnabled)
+            {
+                return;
+            }
 
-			if (player.GetAimVector() is not { } endPos)
-				return;
+            var clientloc = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
 
-			_ropeStates[player.SteamID] = new RopeState
-			{
-				IsEnabled = true,
-				TargetIndex = endPos,
-				Distance = (clientloc - endPos).Length(),
-				Beam = null
-			};
-		}
+            if (player.GetAimVector() is not { } endPos)
+                return;
 
-		public void RopeZero(CCSPlayerController? player, CommandInfo info)
-		{
-			if (PlayerIsValid(player) == false)
-			{
-				return;
-			}
+            _ropeStates[player.SteamID] = new RopeState
+            {
+                IsEnabled = true,
+                TargetIndex = endPos,
+                Distance = (clientloc - endPos).Length(),
+                Beam = null
+            };
+        }
 
-			DetachRope(player);
-		}
+        public void RopeZero(CCSPlayerController? player, CommandInfo info)
+        {
+            if (PlayerIsValid(player) == false)
+            {
+                return;
+            }
 
-		private void Rope_OnTick(CCSPlayerController player)
-		{
-			if (!_ropeStates.ContainsKey(player.SteamID) || !_ropeStates[player.SteamID].IsEnabled || !player.PawnIsAlive)
-			{
-				DetachRope(player);
-				return;
-			}
+            DetachRope(player);
+        }
 
-			var clientloc = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
-			Vector velocity = VEC_ZERO;
-			Vector direction = VEC_ZERO;
-			Vector ascension = VEC_ZERO;
-			float climb = 3.0f;
+        private void Rope_OnTick(CCSPlayerController player)
+        {
+            if (!_ropeStates.ContainsKey(player.SteamID) || !_ropeStates[player.SteamID].IsEnabled || !player.PawnIsAlive)
+            {
+                DetachRope(player);
+                return;
+            }
 
-			var ropeState = _ropeStates[player.SteamID];
-			if (ropeState == null || !ropeState.Distance.HasValue)
-			{
-				return;
-			}
+            var clientloc = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
+            Vector velocity = VEC_ZERO;
+            Vector direction = VEC_ZERO;
+            Vector ascension = VEC_ZERO;
+            float climb = 3.0f;
 
-			float distance = ropeState.Distance.Value;
-			Vector? end = ropeState.TargetIndex;
+            var ropeState = _ropeStates[player.SteamID];
+            if (ropeState == null || !ropeState.Distance.HasValue)
+            {
+                return;
+            }
 
-			if (end == null)
-			{
-				return;
-			}
+            float distance = ropeState.Distance.Value;
+            Vector? end = ropeState.TargetIndex;
 
-			direction = end - clientloc;
+            if (end == null)
+            {
+                return;
+            }
 
-			if (direction.Length() - 5 >= distance - (25))
-			{
-				velocity = player.PlayerPawn?.Value?.AbsVelocity ?? VEC_ZERO;
-				direction = direction.Normalize();
+            direction = end - clientloc;
 
-				ascension.X = direction.X * climb;
-				ascension.Y = direction.Y * climb;
-				ascension.Z = direction.Z * climb;
+            if (direction.Length() - 5 >= distance - (25))
+            {
+                velocity = player.PlayerPawn?.Value?.AbsVelocity ?? VEC_ZERO;
+                direction = direction.Normalize();
 
-				direction = direction *= 60.0f;
-				velocity.X += direction.X + ascension.X;
-				velocity.Y += direction.Y + ascension.Y;
+                ascension.X = direction.X * climb;
+                ascension.Y = direction.Y * climb;
+                ascension.Z = direction.Z * climb;
 
-				if (ascension.Z > 0.0f)
-				{
-					velocity.Z += direction.Z + ascension.Z;
-				}
+                direction = direction *= 60.0f;
+                velocity.X += direction.X + ascension.X;
+                velocity.Y += direction.Y + ascension.Y;
 
-				if (end.Z - clientloc.Z >= distance && velocity.Z < 0.0f)
-				{
-					velocity.Z *= -1;
-				}
+                if (ascension.Z > 0.0f)
+                {
+                    velocity.Z += direction.Z + ascension.Z;
+                }
 
-				if (player.PlayerPawn != null && player.PlayerPawn.Value != null)
-				{
-					player.PlayerPawn.Value.AbsVelocity.Change(velocity);
-				}
-			}
+                if (end.Z - clientloc.Z >= distance && velocity.Z < 0.0f)
+                {
+                    velocity.Z *= -1;
+                }
 
-			var color = Color.FromArgb(255, 0, 255, 0);
-			var width = 3;
+                if (player.PlayerPawn != null && player.PlayerPawn.Value != null)
+                {
+                    player.PlayerPawn.Value.AbsVelocity.Change(velocity);
+                }
+            }
 
-			if (ropeState != null && ropeState.Beam != null)
-			{
-				var beamState = ropeState.Beam;
+            var color = Color.FromArgb(255, 0, 255, 0);
+            var width = 3;
 
-				TeleportBeam(beamState, clientloc, end);
-			}
-			else
-			{
-				var a = CreateBeam(clientloc, end, color, width);
-				if (a != null && a.IsValid && ropeState != null)
-				{
-					ropeState.Beam = a;
-				}
-			}
-		}
+            if (ropeState != null && ropeState.Beam != null)
+            {
+                var beamState = ropeState.Beam;
 
-		private void DetachRope(CCSPlayerController player)
-		{
-			if (!_ropeStates.ContainsKey(player.SteamID))
-			{
-				return;
-			}
+                TeleportBeam(beamState, clientloc, end);
+            }
+            else
+            {
+                var a = CreateBeam(clientloc, end, color, width);
+                if (a != null && a.IsValid && ropeState != null)
+                {
+                    ropeState.Beam = a;
+                }
+            }
+        }
 
-			var ropeState = _ropeStates[player.SteamID];
-			if (ropeState != null && ropeState.IsEnabled)
-			{
-				ropeState.IsEnabled = false;
-				ropeState.TargetIndex = null;
+        private void DetachRope(CCSPlayerController player)
+        {
+            if (!_ropeStates.ContainsKey(player.SteamID))
+            {
+                return;
+            }
 
-				if (ropeState.Beam != null)
-				{
-					ropeState.Beam.Remove();
-					ropeState.Beam = null;
-				}
-				_ropeStates.Remove(player.SteamID);
-			}
-		}
+            var ropeState = _ropeStates[player.SteamID];
+            if (ropeState != null && ropeState.IsEnabled)
+            {
+                ropeState.IsEnabled = false;
+                ropeState.TargetIndex = null;
 
-	}
+                if (ropeState.Beam != null)
+                {
+                    ropeState.Beam.Remove();
+                    ropeState.Beam = null;
+                }
+                _ropeStates.Remove(player.SteamID);
+            }
+        }
+
+    }
 }
