@@ -25,11 +25,13 @@ namespace Katrox
 
 		private void Rope_Load()
 		{
-			AddCommand(Config.Rope.Rope1, "", RopeOne);
-			AddCommand(Config.Rope.Rope0, "", RopeZero);
+			if (!string.IsNullOrWhiteSpace(Config.Rope.Rope1))
+				AddCommand(Config.Rope.Rope1, "", RopeOne);
+			if (!string.IsNullOrWhiteSpace(Config.Rope.Rope0))
+				AddCommand(Config.Rope.Rope0, "", RopeZero);
 
-			foreach (var xC in Config.Rope.GiveTempRope) AddCommand(xC, "", RopeVer);
-			foreach (var xC in Config.Rope.RemoveTempRope) AddCommand(xC, "", RopeSil);
+			foreach (var xC in Config.Rope.GiveTempRope.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", RopeVer);
+			foreach (var xC in Config.Rope.RemoveTempRope.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", RopeSil);
 		}
 
 		[CommandHelper(1, "<target>")]

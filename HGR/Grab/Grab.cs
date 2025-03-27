@@ -23,11 +23,13 @@ namespace Katrox
 
 		public void Grab_Load()
 		{
-			AddCommand(Config.Grab.Grab1, "", GrabOne);
-			AddCommand(Config.Grab.Grab0, "", GrabZero);
+			if (!string.IsNullOrWhiteSpace(Config.Grab.Grab1))
+				AddCommand(Config.Grab.Grab1, "", GrabOne);
+			if (!string.IsNullOrWhiteSpace(Config.Grab.Grab0))
+				AddCommand(Config.Grab.Grab0, "", GrabZero);
 
-			foreach (var xC in Config.Grab.GiveTempGrab) AddCommand(xC, "", GrabVer);
-			foreach (var xC in Config.Grab.RemoveTempGrab) AddCommand(xC, "", GrabSil);
+			foreach (var xC in Config.Grab.GiveTempGrab.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", GrabVer);
+			foreach (var xC in Config.Grab.RemoveTempGrab.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", GrabSil);
 		}
 
 		private void Grab_OnTick(CCSPlayerController? player)

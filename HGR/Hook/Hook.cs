@@ -19,18 +19,20 @@ namespace Katrox
 
 		private void Hook_Load()
 		{
-            AddCommand(Config.Hook.Hook1, "", HookOne);
-            AddCommand(Config.Hook.Hook0, "", HookZero);
+			if (!string.IsNullOrWhiteSpace(Config.Hook.Hook1))
+            	AddCommand(Config.Hook.Hook1, "", HookOne);
+			if (!string.IsNullOrWhiteSpace(Config.Hook.Hook0))
+            	AddCommand(Config.Hook.Hook0, "", HookZero);
 
-            foreach (var xC in Config.Hook.OpenHookForAll) AddCommand(xC, "", HookAc);
-            foreach (var xC in Config.Hook.OpenHookForT) AddCommand(xC, "", HookAcT);
-            foreach (var xC in Config.Hook.OpenHookForCT) AddCommand(xC, "", HookAcCt);
-            foreach (var xC in Config.Hook.DisableHookForAll) AddCommand(xC, "", HookKapa);
-            foreach (var xC in Config.Hook.DisableHookForT) AddCommand(xC, "", HookKapaT);
-            foreach (var xC in Config.Hook.DisableHookForCT) AddCommand(xC, "", HookKapaCT);
-            foreach (var xC in Config.Hook.ChangeHookSpeed) AddCommand(xC, "", HookHiz);
-            foreach (var xC in Config.Hook.GiveTempHook) AddCommand(xC, "", HookVer);
-            foreach (var xC in Config.Hook.RemoveTempHook) AddCommand(xC, "", HookSil);
+            foreach (var xC in Config.Hook.OpenHookForAll.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookAc);
+            foreach (var xC in Config.Hook.OpenHookForT.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookAcT);
+            foreach (var xC in Config.Hook.OpenHookForCT.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookAcCt);
+            foreach (var xC in Config.Hook.DisableHookForAll.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookKapa);
+            foreach (var xC in Config.Hook.DisableHookForT.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookKapaT);
+            foreach (var xC in Config.Hook.DisableHookForCT.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookKapaCT);
+            foreach (var xC in Config.Hook.ChangeHookSpeed.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookHiz);
+            foreach (var xC in Config.Hook.GiveTempHook.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookVer);
+            foreach (var xC in Config.Hook.RemoveTempHook.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", HookSil);
         }
 
 		public void HookOne(CCSPlayerController? player, CommandInfo info)
