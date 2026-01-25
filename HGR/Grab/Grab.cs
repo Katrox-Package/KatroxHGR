@@ -6,14 +6,14 @@ namespace Katrox
 {
     public partial class Katrox
     {
-        private static Dictionary<ulong, GrabState> GrabDatas = new();
-        private static List<ulong> HasGrabPlayers = new();
+        private static Dictionary<ulong, GrabState> GrabDatas      = new();
+        private static List<ulong>                  HasGrabPlayers = new();
 
         private class GrabState
         {
-            public float? InitialDistance { get; set; }
-            public CEnvBeam? Beam { get; set; }
-            public CBaseEntity? Entity { get; set; } = null;
+            public float?       InitialDistance { get; set; }
+            public CEnvBeam?    Beam            { get; set; }
+            public CBaseEntity? Entity          { get; set; } = null;
         }
 
         public void Grab_Load()
@@ -23,13 +23,14 @@ namespace Katrox
             if (!string.IsNullOrWhiteSpace(Config.Grab.Grab0))
                 AddCommand(Config.Grab.Grab0, "", GrabZero);
 
-            foreach (var xC in Config.Grab.GiveTempGrab.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", GrabVer);
-            foreach (var xC in Config.Grab.RemoveTempGrab.Where(x => !string.IsNullOrWhiteSpace(x)).ToList()) AddCommand(xC, "", GrabSil);
+            foreach (var xC in Config.Grab.GiveTempGrab.Where(x => !string.IsNullOrWhiteSpace(x)).ToList())
+                AddCommand(xC, "", GrabVer);
+            foreach (var xC in Config.Grab.RemoveTempGrab.Where(x => !string.IsNullOrWhiteSpace(x)).ToList())
+                AddCommand(xC, "", GrabSil);
         }
 
-        private void Grab_OnTick(CCSPlayerController? player)
+        private void Grab_OnTick(CCSPlayerController player)
         {
-            if (!PlayerIsValid(player)) return;
             if (!GrabDatas.ContainsKey(player.SteamID)) return;
 
             if (GrabDatas[player.SteamID].Entity == null || !GrabDatas[player.SteamID].InitialDistance.HasValue)
@@ -45,19 +46,21 @@ namespace Katrox
                 player.PrintToCenterHtml(Localizer["GrabSearchingPlayer"]);
                 var target = player.GetAimTarget<CBaseEntity>();
                 if (target != null
-                    && target.IsValid
-                    && allowedMoveTypes.Contains(target.MoveType))
+                 && target.IsValid
+                 && allowedMoveTypes.Contains(target.MoveType))
                 {
-                    var initialDistance = (player.PlayerPawn.Value!.AbsOrigin ?? VEC_ZERO).Distance(target.AbsOrigin ?? VEC_ZERO);
+                    var initialDistance =
+                        (player.PlayerPawn.Value!.AbsOrigin ?? VEC_ZERO).Distance(target.AbsOrigin ?? VEC_ZERO);
                     GrabDatas[player.SteamID] = new GrabState
                     {
                         InitialDistance = initialDistance,
-                        Beam = null,
-                        Entity = target
+                        Beam            = null,
+                        Entity          = target
                     };
 
                     if (target.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true)
-                        target.As<CCSPlayerPawn>()?.OriginalController?.Value?.PlayerPawn?.Value?.Teleport(null, null, VEC_ZERO);
+                        target.As<CCSPlayerPawn>()?.OriginalController?.Value?.PlayerPawn?.Value
+                             ?.Teleport(null, null, VEC_ZERO);
                     else
                         target.Teleport(null, null, VEC_ZERO);
 
@@ -75,11 +78,15 @@ namespace Katrox
 
         private void Grab_EntityGrab(CCSPlayerController player)
         {
-            var gEntity = GrabDatas[player.SteamID].Entity;
-            if (gEntity == null
-                || !gEntity.IsValid
-                || !player.PawnIsAlive
-                || (gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true && gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.PawnIsAlive != true))
+            if (GrabDatas[player.SteamID].Entity is not { IsValid: true } gEntity)
+            {
+                ReleaseGrabbedPlayer(player);
+                return;
+            }
+
+            if (!player.PawnIsAlive
+             || (gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true &&
+                 gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.PawnIsAlive != true))
             {
                 ReleaseGrabbedPlayer(player);
                 return;
@@ -87,14 +94,14 @@ namespace Katrox
 
             var start = player.PlayerPawn?.Value?.AbsOrigin ?? VEC_ZERO;
 
-            var eyeAngles = player.PlayerPawn?.Value?.EyeAngles;
+            var eyeAngles = player.PlayerPawn?.Value?.V_angle;
             if (eyeAngles == null) return;
 
             Vector forward = new Vector();
             NativeAPI.AngleVectors(eyeAngles.Handle, forward.Handle, IntPtr.Zero, IntPtr.Zero);
 
             var initialDistance = GrabDatas[player.SteamID].InitialDistance;
-            var end = start + forward * initialDistance!.Value;
+            var end             = start + forward * initialDistance!.Value;
 
             bool isMouse1ButtonPressed = (player.Pawn.Value?.MovementServices!.Buttons.ButtonStates[0] & 1) != 0;
             bool isMouse2ButtonPressed = (player.Pawn.Value?.MovementServices!.Buttons.ButtonStates[0] & 2048) != 0;
@@ -117,13 +124,15 @@ namespace Katrox
                 var velocity = (end - gEntity.AbsOrigin!) * 7;
 
                 if (gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.IsValid == true)
-                    gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.PlayerPawn?.Value?.Teleport(null, null, velocity);
+                    gEntity.As<CCSPlayerPawn>()?.OriginalController?.Value?.PlayerPawn?.Value
+                          ?.Teleport(null, null, velocity);
                 else
                     gEntity.Teleport(null, null, velocity);
 
                 var color = Color.FromArgb(255, 255, 0, 0);
                 var width = 3;
-                if (GrabDatas.TryGetValue(player.SteamID, out GrabState? grabState) && grabState != null && grabState.Beam != null)
+                if (GrabDatas.TryGetValue(player.SteamID, out GrabState? grabState) && grabState != null &&
+                    grabState.Beam != null)
                 {
                     var beamState = grabState.Beam;
                     TeleportBeam(beamState, start, gEntity.AbsOrigin!);
@@ -141,14 +150,16 @@ namespace Katrox
 
         private void ReleaseGrabbedPlayer(CCSPlayerController player)
         {
-            var gEntity = GrabDatas[player.SteamID].Entity;
-            if (gEntity != null)
+            if (GrabDatas[player.SteamID].Entity is { IsValid: true } gEntity)
+            {
                 player.PrintToCenter(Localizer["ReleasedGrabbedPlayer", gEntity?.DesignerName ?? ""]);
+            }
 
-            if (GrabDatas.TryGetValue(player.SteamID, out GrabState? grabState) && grabState.Beam != null)
+            if (GrabDatas.TryGetValue(player.SteamID, out GrabState? grabState) && grabState.Beam is { IsValid: true })
             {
                 grabState.Beam.AcceptInput("Kill");
             }
+
             GrabDatas.Remove(player.SteamID);
         }
 
@@ -159,7 +170,8 @@ namespace Katrox
             {
                 return null;
             }
-            var eyeAngles = player.PlayerPawn.Value.EyeAngles;
+
+            var eyeAngles = player.PlayerPawn.Value.V_angle;
             if (eyeAngles == null)
             {
                 return null;

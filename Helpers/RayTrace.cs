@@ -21,7 +21,7 @@ namespace Katrox
                 return false;
 
             var pawnPosition = basePawn.CBodyComponent.SceneNode.AbsOrigin ?? Katrox.VEC_ZERO;
-            var pawnAngles = pPawn.EyeAngles ?? Katrox.ANGLE_ZERO;
+            var pawnAngles = pPawn.V_angle ?? Katrox.ANGLE_ZERO;
 
             var traceResult = TraceShape(pawnPosition, pawnAngles, mask);
             if (traceResult.HasValue)
